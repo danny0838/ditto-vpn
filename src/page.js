@@ -1458,21 +1458,31 @@
   /**
    * Get the radio element group from a member.
    *
-   * @param {NodeList<HTMLInputElement>|HTMLInputElement} elem - the radio element group member
-   * @returns {NodeList<HTMLInputElement>} the radio element group
+   * ref: https://html.spec.whatwg.org/multipage/input.html#radio-button-group
+   *
+   * @param {HTMLInputElement} elem - the radio element group member
+   * @returns {RadioNodeList|HTMLInputElement[]} the radio element group
    */
   function getRadioGroup(elem) {
+    if (!elem.name) {
+      return [elem];
+    }
+
     const formOwner = elem.closest('form');
     if (formOwner) {
-      return formOwner.querySelectorAll(`[name="${CSS.escape(elem.name)}"]`);
+      return formOwner.elements.namedItem(elem.name);
     }
-    return elem.ownerDocument.querySelectorAll(`[name="${CSS.escape(elem.name)}"]`).filter(e => !e.closest('form'));
+
+    return Array.prototype.filter.call(
+      elem.ownerDocument.querySelectorAll(`[name="${CSS.escape(elem.name)}"]`),
+      e => !e.closest('form'),
+    );
   }
 
   /**
    * @callback getRadioValueParseValueCallback
    * @param {Element} elem - currently iterated radio element
-   * @param {NodeList<HTMLInputElement>} elems - the radio element group to get value from
+   * @param {NodeList<HTMLInputElement>|HTMLInputElement[]} elems - the radio element group to get value from
    * @returns {string} value of the radio element group
    */
 
@@ -1480,7 +1490,7 @@
    * Get the value of a radio element group, identified by the same name and
    * usually a common ID prefix.
    *
-   * @param {NodeList<HTMLInputElement>|HTMLInputElement} elems - the radio element group (or a member) to get value from
+   * @param {NodeList<HTMLInputElement>|HTMLInputElement[]|HTMLInputElement} elems - the radio element group (or a member) to get value from
    * @param {Object} [options]
    * @param {getRadioValueParseValueCallback} [options.parseValue] - the callback to cast value
    */
@@ -1552,7 +1562,7 @@
    * Apply value to a radio element group, identified by the same name and
    * usually a common ID prefix.
    *
-   * @param {NodeList<HTMLInputElement>|HTMLInputElement} elems - the radio element group (or a member) to apply value to
+   * @param {NodeList<HTMLInputElement>|HTMLInputElement[]|HTMLInputElement} elems - the radio element group (or a member) to apply value to
    * @param {string|number} value - value to apply
    * @param {Object} [options]
    * @param {boolean} [options.simulateInput] - whether to simulate user input
