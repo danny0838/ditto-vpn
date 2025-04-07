@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "web-ext run -t chromium",
+    "build": "web-ext build",
+    "lint": "eslint"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin": "^4.2.0",
+    "eslint": "^9.23.0",
+    "globals": "^16.0.0",
+    "web-ext": "^8.5.0"
+  }
+}

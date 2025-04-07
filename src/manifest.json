@@ -1,0 +1,22 @@
+{
+  "name": "Ditto VPN",
+  "description": "快速複製與貼上健保資訊網服務系統 (VPN) 的數據，幫醫事人員節省心力。",
+  "author": "Danny Lin",
+  "homepage_url": "https://github.com/danny0838/ditto-vpn",
+  "manifest_version": 3,
+  "minimum_chrome_version": "102",
+  "version": "1.2.0",
+  "permissions": [
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://medvpn.nhi.gov.tw/*"
+  ],
+  "optional_host_permissions": [
+    "http://localhost/*"
+  ],
+  "action": {
+    "default_popup": "action.html"
+  }
+}
