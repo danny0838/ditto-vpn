@@ -614,8 +614,6 @@
           elem.value = ckd4[elem.id.slice(cut)];
         }
       }
-
-      this._pasteFromFrame(document, result);
     }
   }
 
