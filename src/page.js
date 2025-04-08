@@ -241,7 +241,7 @@
   }
 
   class PlanHospDyspnea extends PlanHosp {
-    static fields = ['barthal', 'act', 'cat', 'mmrc'];
+    static fields = ['plan_hosp_dyspnea', 'barthal', 'act', 'cat', 'mmrc'];
 
     static check(document) {
       return super.check(document) && document.querySelector('#cph_cboCareType_3')?.checked;
@@ -249,6 +249,14 @@
 
     static copy(document, data, options) {
       super.copy(document, data, options);
+
+      {
+        data.info.plan_hosp_dyspnea = {
+          RR: document.querySelector('#cph_txtRR').value,
+          HR: document.querySelector('#cph_txtHR').value,
+          SpO2: document.querySelector('#cph_txtSpO2').value,
+        };
+      }
 
       {
         const prefix = 'cph_btnACT_hidACT_';
@@ -276,7 +284,14 @@
         return true;
       }
 
-      const [{info: {act, cat, mmrc}}] = result.infos;
+      const [{info: {plan_hosp_dyspnea, act, cat, mmrc}}] = result.infos;
+
+      if (plan_hosp_dyspnea) {
+        const {RR, HR, SpO2} = plan_hosp_dyspnea;
+        document.querySelector('#cph_txtRR').value = RR;
+        document.querySelector('#cph_txtHR').value = HR;
+        document.querySelector('#cph_txtSpO2').value = SpO2;
+      }
 
       if (act) {
         const prefix = 'cph_btnACT_hidACT_';
@@ -531,7 +546,7 @@
   }
 
   class PlanCkd extends PlanGeneral {
-    static fields = ['eq5d', 'ckd2', 'ckd3', 'ckd4'];
+    static fields = ['plan_ckd', 'eq5d', 'ckd2', 'ckd3', 'ckd4'];
 
     static check(document) {
       return document.querySelector('#cph_cboPlan_txt')?.value === "06";
@@ -539,6 +554,16 @@
 
     static copy(document, data, options) {
       super.copy(document, data, options);
+
+      {
+        data.info.plan_ckd = {};
+        for (const elem of document.querySelectorAll('#cph_pnlBaseData input[id^=cph_txt]')) {
+          const key = elem.id.slice(7);
+          data.info.plan_ckd[key] = elem.value;
+        }
+        data.info.plan_ckd.SRC = document.querySelector('#cph_cboCHK_SRC_txt').value;
+        data.info.plan_ckd.DM = getRadioValue(document.querySelector('#cph_chkDM_Y'));
+      }
 
       {
         data.info.eq5d = {};
@@ -582,7 +607,20 @@
         return true;
       }
 
-      const [{info: {eq5d, ckd2, ckd3, ckd4}}] = result.infos;
+      const [{info: {plan_ckd, eq5d, ckd2, ckd3, ckd4}}] = result.infos;
+
+      if (plan_ckd) {
+        const {DM, SRC, ...keys} = plan_ckd;
+        for (const elem of document.querySelectorAll('#cph_pnlBaseData input[id^=cph_txt]')) {
+          const key = elem.id.slice(7);
+          applyValue(elem, keys[key]);
+        }
+
+        applyValue(document.querySelector('#cph_cboCHK_SRC_txt'), SRC);
+
+        applyRadioValue(document.querySelector('#cph_chkDM_Y'), DM);
+      }
+
       if (eq5d) {
         const prefix = 'cph_btnEQ5D_hidEQ_';
         const cut = prefix.length;
@@ -891,6 +929,9 @@
           }
         }
       },
+    },
+    plan_hosp_dyspnea: {
+      name: '呼吸困難數值',
     },
     act: {
       name: 'ACT',
@@ -1338,6 +1379,9 @@
           }
         }
       },
+    },
+    plan_ckd: {
+      name: '慢性腎病數值',
     },
   };
 
