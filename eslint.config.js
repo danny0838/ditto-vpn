@@ -1,6 +1,6 @@
-import js from '@eslint/js';
-import globals from 'globals';
-import stylistic from '@stylistic/eslint-plugin';
+import js from "@eslint/js";
+import globals from "globals";
+import stylistic from "@stylistic/eslint-plugin";
 
 // ref: https://github.com/eslint-stylistic/eslint-stylistic/blob/main/packages/eslint-plugin/configs/customize.ts
 const stylisticCustomized = stylistic.configs.customize({
@@ -11,7 +11,7 @@ const stylisticCustomized = stylistic.configs.customize({
 export default [
   {
     ignores: [
-      'dist',
+      "dist",
     ],
   },
   {
