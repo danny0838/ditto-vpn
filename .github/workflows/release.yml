@@ -15,14 +15,34 @@ on:
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    env:
+      IS_DRAFT: ${{ github.event.inputs.is_draft }}
+      IS_PRE: ${{ github.event.inputs.is_pre }}
+      TIMEZONE: ${{ vars.TIMEZONE || 'UTC' }}
 
-    # Add explicit permissions for releases
+    # Add explicit permissions for tag/release
     permissions:
       contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Configure and verify
+        run: |
+          VERSION=$(jq -r '.version' './src/manifest.json')
+
+          if [ "$IS_PRE" = "false" ]; then
+            EXPECTED_LINE="## [$VERSION] - $(TZ="$TIMEZONE" date +%Y-%m-%d)"
+            if ! grep -Fxq "$EXPECTED_LINE" CHANGELOG.md; then
+              echo "❌ Missing expected changelog line: $EXPECTED_LINE"
+              exit 1
+            fi
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG_NAME=v$VERSION" >> $GITHUB_ENV
+          echo "EXT_PATH=dist/ditto_vpn-$VERSION.zip" >> $GITHUB_ENV
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -32,42 +52,34 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Ensure no code issue
+      - name: Verify no code issue
         run: npm run lint
 
       - name: Build extension
         run: npm run build
 
-      - name: Get version from manifest.json
-        id: get_version
-        run: |
-          VERSION=$(node -p "require('./src/manifest.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "TAG_NAME=v$VERSION" >> $GITHUB_OUTPUT
-          echo "FILE_PATH=dist/ditto_vpn-$VERSION.zip" >> $GITHUB_OUTPUT
-
       - name: Create Git Tag
         run: |
-          git tag ${{ steps.get_version.outputs.TAG_NAME }}
-          git push origin ${{ steps.get_version.outputs.TAG_NAME }}
+          git tag --force ${{ env.TAG_NAME }}
+          git push origin ${{ env.TAG_NAME }}
 
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
-          draft: ${{ github.event.inputs.is_draft }}
-          prerelease: ${{ github.event.inputs.is_pre }}
+          tag_name: ${{ env.TAG_NAME }}
+          draft: ${{ env.IS_DRAFT }}
+          prerelease: ${{ env.IS_PRE }}
           make_latest: 'legacy'  # mark latest for a release with larger version
           generate_release_notes: true
-          files: ${{ steps.get_version.outputs.FILE_PATH }}
+          files: ${{ env.EXT_PATH }}
 
       - name: Upload to Chrome Web Store
-        if: ${{ github.event.inputs.is_pre == 'false' }}
+        if: ${{ env.IS_PRE == 'false' }}
         uses: mnao305/chrome-extension-upload@v5.0.0
         with:
-          publish: ${{ github.event.inputs.is_draft == 'false' }}
-          file-path: ${{ steps.get_version.outputs.FILE_PATH }}
+          publish: ${{ env.IS_DRAFT == 'false' }}
+          file-path: ${{ env.EXT_PATH }}
           extension-id: ${{ vars.CHROME_EXTENSION_ID }}
 
           # https://github.com/fregante/chrome-webstore-upload-keys
