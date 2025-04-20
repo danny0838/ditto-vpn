@@ -765,6 +765,117 @@
     }
   }
 
+  class PlanHomeCare extends PlanBase {
+    static fields = ['plan_home_care'];
+
+    static check(document) {
+      return !!document.querySelector('#cph_cboAPPL_TYPE_txt');
+    }
+
+    static copy(document, data) {
+      data.id = document.querySelector('#cph_txtID').value;
+      data.birth = document.querySelector('#cph_txtBirth_txt').value;
+      data.name = document.querySelector('#cph_txtNAME').value;
+      if (!data.id) {
+        throw new Error(`缺少基本資料: 身分證號`);
+      }
+      if (!data.birth) {
+        throw new Error(`缺少基本資料: 出生日期`);
+      }
+
+      data.date = document.querySelector('#cph_txtAPPL_DATE_txt').value;
+      if (!data.date) {
+        throw new Error(`缺少基本資料: 申請日期`);
+      }
+
+      data.info.plan_home_care = {};
+      const prefix = 'ctl00$cph$';
+      const cut = prefix.length;
+      for (const elem of document.querySelectorAll(`:is(#cph_Fieldset5, #cph_Fieldset6, #cph_Fieldset4 > table > tbody > tr:nth-child(6)) [name^="${prefix}"]`)) {
+        if (elem.matches(`[type="image"], [type="submit"], [type="hidden"]`)) {
+          continue;
+        }
+
+        if (elem.matches(`[name^="${prefix}chk"]`)) {
+          const key = elem.name.slice(cut + 3);
+          data.info.plan_home_care[key] = elem.checked ? "Y" : "N";
+          continue;
+        }
+
+        if (elem.matches(`[name^="${prefix}txt"], [name^="${prefix}cbo"]`)) {
+          let key = elem.name.slice(cut + 3);
+          if (key.endsWith('$txt')) { key = key.slice(0, -4); }
+          data.info.plan_home_care[key] = elem.value;
+          continue;
+        }
+
+        let key = elem.name.slice(cut);
+        if (key.startsWith('ral')) { key = key.slice(3); }
+        if (data.info.plan_home_care[key] !== undefined) { continue; }
+        data.info.plan_home_care[key] = getRadioValue(elem, {
+          parseValue: (elem) => elem.value.replace(/^\D+/, ''),
+        });
+      }
+    }
+
+    static async paste(document, result, {forceDate} = {}) {
+      const id = result.id = document.querySelector('#cph_txtID').value;
+      const birth = document.querySelector('#cph_txtBirth_txt').value;
+      if (!id) {
+        throw new Error(`缺少基本資料: 身分證號`);
+      }
+      if (!birth) {
+        throw new Error(`缺少基本資料: 出生日期`);
+      }
+
+      const data = result.data = (await chrome.storage.session.get(id))[id];
+      if (!data) {
+        throw new Error(`個案 ${id} 沒有已暫存的數據`);
+      }
+
+      if (forceDate) {
+        for (const date in data.infos) {
+          if (date !== forceDate) {
+            delete data.infos[date];
+          }
+        }
+      }
+
+      result.infos = getFilteredInfos(data, this.fields);
+      if (result.infos.length !== 1) { return true; }
+
+      const [{info: {plan_home_care}}] = result.infos;
+      const prefix = 'ctl00$cph$';
+      const cut = prefix.length;
+      for (const elem of document.querySelectorAll(`:is(#cph_Fieldset5, #cph_Fieldset6, #cph_Fieldset4 > table > tbody > tr:nth-child(6)) [name^="${prefix}"]`)) {
+        if (elem.matches(`[type="image"], [type="submit"], [type="hidden"]`)) {
+          continue;
+        }
+
+        if (elem.matches(`[name^="${prefix}chk"]`)) {
+          const key = elem.name.slice(cut + 3);
+          applyValue(elem, plan_home_care[key], {
+            parseBoolean: (value) => value === "Y",
+          });
+          continue;
+        }
+
+        if (elem.matches(`[name^="${prefix}txt"], [name^="${prefix}cbo"]`)) {
+          let key = elem.name.slice(cut + 3);
+          if (key.endsWith('$txt')) { key = key.slice(0, -4); }
+          applyValue(elem, plan_home_care[key]);
+          continue;
+        }
+
+        let key = elem.name.slice(cut);
+        if (key.startsWith('ral')) { key = key.slice(3); }
+        applyRadioValue(elem, plan_home_care[key], {
+          parseBoolean: (value, elem) => elem.value.replace(/^\D+/, '') === value,
+        });
+      }
+    }
+  }
+
   const pageTypeMap = {
     _determine(document) {
       for (const [type, handler] of Object.entries(pageTypeMap)) {
@@ -785,6 +896,7 @@
     ca_ext: PlanCaExt,
     ckd: PlanCkd,
     special_cva: PlanSpecialCva,
+    home_care: PlanHomeCare,
   };
 
   const scaleTypeMap = {
@@ -1382,6 +1494,9 @@
     },
     plan_ckd: {
       name: '慢性腎病數值',
+    },
+    plan_home_care: {
+      name: '居家照護',
     },
   };
 
