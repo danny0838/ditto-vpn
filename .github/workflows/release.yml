@@ -75,7 +75,7 @@ jobs:
           files: ${{ env.EXT_PATH }}
 
       - name: Upload to Chrome Web Store
-        if: ${{ env.IS_PRE == 'false' }}
+        if: ${{ ! cancelled() && steps.create_release.conclusion == 'success' && env.IS_PRE == 'false' }}
         uses: mnao305/chrome-extension-upload@v5.0.0
         with:
           publish: ${{ env.IS_DRAFT == 'false' }}
@@ -86,3 +86,13 @@ jobs:
           client-id: ${{ secrets.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+
+      - name: Upload to Microsoft Edge Add-ons
+        if: ${{ ! cancelled() && steps.create_release.conclusion == 'success' && env.IS_PRE == 'false' }}
+        uses: wdzeng/edge-addon@v2
+        with:
+          upload-only: ${{ env.IS_DRAFT == 'true' }}
+          zip-path: ${{ env.EXT_PATH }}
+          product-id: ${{ vars.EDGE_PRODUCT_ID }}
+          client-id: ${{ secrets.EDGE_CLIENT_ID }}
+          api-key: ${{ secrets.EDGE_API_KEY }}
