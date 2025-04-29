@@ -14,7 +14,9 @@ on:
 
 jobs:
   build-and-release:
+    name: Build and Release
     runs-on: ubuntu-latest
+    environment: production
     env:
       IS_DRAFT: ${{ github.event.inputs.is_draft }}
       IS_PRE: ${{ github.event.inputs.is_pre }}
