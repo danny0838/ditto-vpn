@@ -1,5 +1,8 @@
 # Ditto VPN
 
+[![GitHub version](https://img.shields.io/github/v/release/danny0838/ditto-vpn?label=release)](https://github.com/danny0838/ditto-vpn/releases)
+![License](https://img.shields.io/github/license/danny0838/ditto-vpn)
+
 這個 Chrome 擴充功能可以快速複製與貼上健保資訊網服務系統 (VPN) 的評量數據，幫醫事人員節省心力。
 
 目前支援的專案：
