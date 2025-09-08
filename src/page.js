@@ -159,6 +159,7 @@
       for (const elem of document.querySelectorAll(`input[id^="${prefix}"]`)) {
         data.info.nihss[elem.id.slice(cut)] = elem.value;
       }
+      data.info.nihss[''] = document.querySelector('#cph_btnNIHSS_h_ADL_Total').value;
     }
 
     static async paste(document, result, options) {
@@ -173,6 +174,7 @@
         for (const elem of document.querySelectorAll(`input[id^="${prefix}"]`)) {
           elem.value = nihss[elem.id.slice(cut)];
         }
+        document.querySelector('#cph_btnNIHSS_h_ADL_Total').value = nihss[''];
       }
     }
   }
@@ -966,15 +968,20 @@
         for (const elem of form.querySelectorAll(`select[id^="${prefix}"]`)) {
           data.info.nihss[elem.id.slice(cut)] = elem.value;
         }
+        data.info.nihss[''] = form.querySelector('#cph_lblNHISS_SUM').textContent;
       },
       pasteFrame(form, result) {
         result.infos = getFilteredInfos(result.data, ['nihss']);
         if (result.infos.length !== 1) { return; }
 
         const [{info: {nihss}}] = result.infos;
-        for (const key in nihss ?? {}) {
-          const elem = form.querySelector(`#cph_cboNHISS${key}`);
-          applyValue(elem, nihss[key]);
+        if (nihss) {
+          const {'': total, scores} = nihss;
+          for (const key in scores) {
+            const elem = form.querySelector(`#cph_cboNHISS${key}`);
+            applyValue(elem, scores[key]);
+          }
+          form.querySelector('#cph_lblNHISS_SUM').textContent = total;
         }
       },
     },
