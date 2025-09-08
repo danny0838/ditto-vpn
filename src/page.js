@@ -122,6 +122,7 @@
         for (const elem of document.querySelectorAll(`input[id^="${prefix}"]`)) {
           data.info.barthal[elem.id.slice(cut)] = elem.value;
         }
+        data.info.barthal[''] = document.querySelector('#cph_btnBarthel_h_ADL_Total').value;
       }
     }
 
@@ -137,6 +138,8 @@
         for (const elem of document.querySelectorAll(`input[id^="${prefix}"]`)) {
           elem.value = barthal[elem.id.slice(cut)];
         }
+        document.querySelector('#cph_btnBarthel_txtBarthel').value =
+        document.querySelector('#cph_btnBarthel_h_ADL_Total').value = barthal[''];
       }
     }
   }
@@ -725,6 +728,7 @@
     static fields = ['barthal'];
 
     static _mapKeyId = {
+      '': 'cph_txtBaEvalu',
       '1': 'cph_txtEatEvalu',
       '10': 'cph_txtMoveEvalu',
       '2': 'cph_txtPersonalEvalu',
@@ -930,18 +934,23 @@
             },
           });
         }
+        data.info.barthal[''] = form.querySelector('#cph_lblTotal').textContent;
       },
       pasteFrame(form, result) {
         result.infos = getFilteredInfos(result.data, ['barthal']);
         if (result.infos.length !== 1) { return; }
 
         const [{info: {barthal}}] = result.infos;
-        for (const key in barthal ?? {}) {
-          applyRadioValue(form.querySelectorAll(`input[id^="cph_BLI_SCALE2_${key}_"]`), barthal[key], {
-            parseBoolean: (value, elem, elems) => {
-              return elem.id.slice(-1) == elems.length - parseInt(value) / 5;
-            },
-          });
+        if (barthal) {
+          const {'': total, ...scores} = barthal;
+          for (const key in scores) {
+            applyRadioValue(form.querySelectorAll(`input[id^="cph_BLI_SCALE2_${key}_"]`), scores[key], {
+              parseBoolean: (value, elem, elems) => {
+                return elem.id.slice(-1) == elems.length - parseInt(value) / 5;
+              },
+            });
+          }
+          form.querySelector('#cph_lblTotal').textContent = total;
         }
       },
     },
