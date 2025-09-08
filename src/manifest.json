@@ -5,7 +5,7 @@
   "homepage_url": "https://github.com/danny0838/ditto-vpn",
   "manifest_version": 3,
   "minimum_chrome_version": "102",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "permissions": [
     "scripting",
     "storage"
