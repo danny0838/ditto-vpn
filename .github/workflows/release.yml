@@ -3,10 +3,6 @@ name: Publish extension
 on:
   workflow_dispatch:
     inputs:
-      is_draft:
-        description: '建立為草稿'
-        type: boolean
-        default: false
       environment:
         description: 'Environment'
         type: choice
@@ -95,7 +91,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.config.outputs.tag_name }}
-          draft: ${{ github.event.inputs.is_draft }}
+          draft: ${{ github.event.inputs.environment != 'production' }}
           prerelease: ${{ github.event.inputs.environment != 'production' }}
           make_latest: legacy  # mark latest for a release with larger version
           generate_release_notes: true
@@ -123,7 +119,6 @@ jobs:
       - name: Upload to Chrome Web Store
         uses: mnao305/chrome-extension-upload@v5.0.0
         with:
-          publish: ${{ github.event.inputs.is_draft == 'false' }}
           file-path: ${{ needs.main.outputs.ext_path_zip }}
           extension-id: ${{ vars.CHROME_EXTENSION_ID }}
 
@@ -148,7 +143,6 @@ jobs:
       - name: Upload to Microsoft Edge Add-ons
         uses: wdzeng/edge-addon@v2
         with:
-          upload-only: ${{ github.event.inputs.is_draft }}
           zip-path: ${{ needs.main.outputs.ext_path_zip }}
           product-id: ${{ vars.EDGE_PRODUCT_ID }}
           client-id: ${{ secrets.EDGE_CLIENT_ID }}
