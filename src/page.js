@@ -112,7 +112,7 @@
       return document.querySelector('#cph_cboPlan_txt')?.value === "01";
     }
 
-    static copy(document, data, {skipBarthal = false, ...options} = {}) {
+    static copy(document, data, {skipBarthal = false, skipEat10 = true, ...options} = {}) {
       super.copy(document, data, options);
 
       if (!skipBarthal) {
@@ -124,6 +124,16 @@
         }
         data.info.barthal[''] = document.querySelector('#cph_btnBarthel_h_ADL_Total').value;
       }
+
+      if (!skipEat10 && document.querySelector('#cph_btnEAT10_h_EAT10_Total')) {
+        const prefix = 'cph_btnEAT10_hidEAT10_';
+        const cut = prefix.length;
+        data.info.eat10 = {};
+        for (const elem of document.querySelectorAll(`input[id^="${prefix}"]`)) {
+          data.info.eat10[elem.id.slice(cut)] = elem.value;
+        }
+        data.info.eat10[''] = document.querySelector('#cph_btnEAT10_h_EAT10_Total').value;
+      }
     }
 
     static async paste(document, result, options) {
@@ -131,7 +141,7 @@
         return true;
       }
 
-      const [{info: {barthal}}] = result.infos;
+      const [{info: {barthal, eat10}}] = result.infos;
       if (barthal) {
         const prefix = 'cph_btnBarthel_hidBLI_';
         const cut = prefix.length;
@@ -141,18 +151,27 @@
         document.querySelector('#cph_btnBarthel_txtBarthel').value =
         document.querySelector('#cph_btnBarthel_h_ADL_Total').value = barthal[''];
       }
+      if (eat10 && document.querySelector('#cph_btnEAT10_h_EAT10_Total')) {
+        const prefix = 'cph_btnEAT10_hidEAT10_';
+        const cut = prefix.length;
+        for (const elem of document.querySelectorAll(`input[id^="${prefix}"]`)) {
+          elem.value = eat10[elem.id.slice(cut)];
+        }
+        document.querySelector('#cph_btnEAT10_txtEAT10').value =
+        document.querySelector('#cph_btnEAT10_h_EAT10_Total').value = eat10[''];
+      }
     }
   }
 
   class PlanHospCva extends PlanHosp {
-    static fields = ['barthal', 'nihss'];
+    static fields = ['barthal', 'nihss', 'eat10'];
 
     static check(document) {
       return super.check(document) && document.querySelector('#cph_cboCareType_0')?.checked;
     }
 
     static copy(document, data, options) {
-      super.copy(document, data, options);
+      super.copy(document, data, {...options, skipEat10: false});
       const prefix = 'cph_btnNIHSS_hidBLI_SCALE';
       const cut = prefix.length;
       data.info.nihss = {};
@@ -180,14 +199,14 @@
   }
 
   class PlanHospIci extends PlanHosp {
-    static fields = ['barthal', 'rts'];
+    static fields = ['barthal', 'rts', 'eat10'];
 
     static check(document) {
       return super.check(document) && document.querySelector('#cph_cboCareType_1')?.checked;
     }
 
     static copy(document, data, options) {
-      super.copy(document, data, options);
+      super.copy(document, data, {...options, skipEat10: false});
       const prefix = 'cph_btnRTS_hidBLI_SCALE2_';
       const cut = prefix.length;
       data.info.rts = {};
@@ -982,6 +1001,35 @@
             applyValue(elem, scores[key]);
           }
           form.querySelector('#cph_lblNHISS_SUM').textContent = total;
+        }
+      },
+    },
+    eat10: {
+      name: 'EAT-10',
+      checkFrame(form) {
+        return form.action === 'https://medvpn.nhi.gov.tw/AssessControl/AssEAT10.aspx';
+      },
+      copyFrame(form, data) {
+        data.info.eat10 = {};
+        const prefix = 'cph_hidEAT10_';
+        for (const elem of form.querySelectorAll(`input[id^="${prefix}"]`)) {
+          const key = elem.id.slice(prefix.length, elem.id.lastIndexOf('_'));
+          if (data.info.eat10[key] !== undefined) { continue; }
+          data.info.eat10[key] = getRadioValue(elem);
+        }
+        data.info.eat10[''] = form.querySelector('#cph_hidTotal').value;
+      },
+      pasteFrame(form, result) {
+        result.infos = getFilteredInfos(result.data, ['eat10']);
+        if (result.infos.length !== 1) { return; }
+
+        const [{info: {eat10}}] = result.infos;
+        if (eat10) {
+          const {'': total, ...scores} = eat10;
+          for (const key in scores) {
+            applyRadioValue(form.querySelectorAll(`input[id^="cph_EAT10_${key}_"]`), scores[key]);
+          }
+          form.querySelector('#cph_lblTotal').textContent = total;
         }
       },
     },
