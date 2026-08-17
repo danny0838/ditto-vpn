@@ -976,7 +976,7 @@
 
         const [{info: {nihss}}] = result.infos;
         if (nihss) {
-          const {'': total, scores} = nihss;
+          const {'': total, ...scores} = nihss;
           for (const key in scores) {
             const elem = form.querySelector(`#cph_cboNHISS${key}`);
             applyValue(elem, scores[key]);
