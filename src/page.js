@@ -1051,18 +1051,23 @@
             },
           });
         }
+        data.info.rts[''] = form.querySelector('#cph_lblRTS').textContent;
       },
       pasteFrame(form, result) {
         result.infos = getFilteredInfos(result.data, ['rts']);
         if (result.infos.length !== 1) { return; }
 
         const [{info: {rts}}] = result.infos;
-        for (const key in rts ?? {}) {
-          applyRadioValue(form.querySelectorAll(`input[id^="cph_BLI_SCALE2_${key}_"]`), parseInt(rts[key]), {
-            parseBoolean: (value, elem, elems) => {
-              return elem.id.slice(-1) == elems.length - value + (parseInt(key) <= 3 ? 1 : 0);
-            },
-          });
+        if (rts) {
+          const {'': total, ...scores} = rts;
+          for (const key in scores ?? {}) {
+            applyRadioValue(form.querySelectorAll(`input[id^="cph_BLI_SCALE2_${key}_"]`), parseInt(scores[key]), {
+              parseBoolean: (value, elem, elems) => {
+                return elem.id.slice(-1) == elems.length - value + (parseInt(key) <= 3 ? 1 : 0);
+              },
+            });
+          }
+          form.querySelector('#cph_lblRTS').textContent = total;
         }
       },
     },
